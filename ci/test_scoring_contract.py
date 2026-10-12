@@ -69,7 +69,7 @@ class ScoringContractTests(unittest.TestCase):
 
     def test_reference_accepts_conservative_guidance_without_dosing_regimen(self):
         rows = [json.loads(line) for line in DATASET.read_text().splitlines() if line.strip()]
-        reference = rows[6]
+        reference = rows[13]
         self.assertEqual(len(rows), 14)
         control = controls()[-1]["item"]
         self.assertEqual(control["expected_behavior"], reference["expected_behavior"])
