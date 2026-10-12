@@ -17,7 +17,26 @@ runs:
       run: |
         set -euo pipefail
         azd auth login --client-id "$AZURE_CLIENT_ID" --tenant-id "$AZURE_TENANT_ID" --federated-credential-provider github --no-prompt
-        azd extension install azure.ai.agents --version 1.0.0-beta.17 --no-prompt
+        install_agents_extension() {
+          local attempt=1 max_attempts=3 delay output status
+          while (( attempt <= max_attempts )); do
+            if output="$(azd extension install azure.ai.agents --version 1.0.0-beta.17 --no-prompt 2>&1)"; then
+              printf '%s\n' "$output"
+              return 0
+            else
+              status=$?
+              printf '%s\n' "$output" >&2
+            fi
+            if (( attempt == max_attempts )) || ! grep -Eiq 'status code[[:space:]]*:?[[:space:]]*(408|429|5[0-9]{2})|timed out|timeout|temporary failure|connection reset|TLS handshake' <<< "$output"; then
+              return "$status"
+            fi
+            delay=$((attempt * 10))
+            echo "Transient extension download failure; retrying in ${delay}s ($attempt/$max_attempts)..." >&2
+            sleep "$delay"
+            attempt=$((attempt + 1))
+          done
+        }
+        install_agents_extension
         azd env new "${{ inputs.env-name }}" --subscription "$AZURE_SUBSCRIPTION_ID" --location eastus2 --no-prompt
         azd env set AZURE_AI_PROJECT_ENDPOINT "$PROJECT_ENDPOINT"
         azd env set FOUNDRY_PROJECT_ENDPOINT "$PROJECT_ENDPOINT"
