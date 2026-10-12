@@ -1,0 +1,7 @@
+agentops-accelerator==0.15.1
+azure-ai-evaluation[redteam]==1.18.6
+azure-ai-projects==2.7.0
+azure-identity>=1.17.0
+requests
+pyyaml
+httpx>=0.27

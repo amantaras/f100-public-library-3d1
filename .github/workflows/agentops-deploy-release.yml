@@ -1,0 +1,208 @@
+name: "2 · Release: dev → production"
+# agentops:deploy-mode=azd
+
+# One run shows the whole outer loop: the merged change is deployed to dev and gated by
+# AgentOps, then the same code goes to production, is verified, red-teamed and put under
+# Foundry continuous evaluation. Any failure stops the release and opens an issue.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "main.py"
+      - "requirements.txt"
+      - "agent.yaml"
+      - "azure.yaml"
+      - ".agent_configs/**"
+      - "evaluations/**"
+      - "agentops.yaml"
+      - "ci/**"
+      - ".github/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-library-3d1-release
+  cancel-in-progress: false
+
+env:
+  AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  AZURE_OPENAI_DEPLOYMENT: gpt-6-luna
+
+jobs:
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -q pyyaml
+      - run: python ci/pipeline/build_dataset.py --check
+      - run: python -m unittest discover -s ci/pipeline -p 'test_*.py' -v
+
+  dev:
+    name: Dev · deploy and gate
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: dev
+    permissions:
+      contents: read
+      id-token: write
+      actions: read
+    outputs:
+      version: ${{ steps.deploy.outputs.version }}
+    env:
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      PROJECT_ENDPOINT: ${{ vars.PROJECT_ENDPOINT }}
+      PROJECT_ID: ${{ vars.PROJECT_ID }}
+      AZURE_AI_FOUNDRY_PROJECT_ENDPOINT: ${{ vars.PROJECT_ENDPOINT }}
+      APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - id: deploy
+        name: Deploy to dev as a new agent version
+        uses: ./.github/actions/deploy
+        with:
+          env-name: dev-${{ github.run_id }}
+      - name: Fetch the production baseline
+        run: |
+          run_id="$(gh run list --branch main --status success --limit 50 --json databaseId,name --jq 'map(select(.name == "2 · Release: dev → production"))[0].databaseId // empty')"
+          if [ -n "$run_id" ]; then gh run download "$run_id" -n production-baseline -D baseline || true; fi
+          ls baseline 2>/dev/null || echo "No production baseline yet (first release)"
+      - name: AgentOps eval gate (agentops eval run on dev v${{ steps.deploy.outputs.version }})
+        run: |
+          python ci/pipeline/agentops_eval.py --concurrency 6 eval run --config agentops.yaml \
+            --agent "$PROJECT_ENDPOINT/agents/public-library-3d1/versions/${{ steps.deploy.outputs.version }}" \
+            --output results/dev --format all
+      - name: Block any regression vs production
+        if: always() && hashFiles('results/dev/results.json') != ''
+        run: python ci/pipeline/regression_gate.py --candidate results/dev/results.json --baseline baseline/results.json --baseline-label "production v$(cat baseline/version.txt 2>/dev/null || echo '?')" --output results/regression.json
+      - name: Publish the AgentOps report
+        if: always()
+        run: '{ echo "## Dev v${{ steps.deploy.outputs.version }}: AgentOps evaluation"; cat results/dev/report.md 2>/dev/null; } >> "$GITHUB_STEP_SUMMARY"'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dev-evaluation
+          path: results/
+          include-hidden-files: true
+
+  production:
+    name: Production · deploy and verify
+    needs: dev
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      version: ${{ steps.deploy.outputs.version }}
+    env:
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      PROJECT_ENDPOINT: ${{ vars.PROJECT_ENDPOINT }}
+      PROJECT_ID: ${{ vars.PROJECT_ID }}
+      AZURE_AI_FOUNDRY_PROJECT_ENDPOINT: ${{ vars.PROJECT_ENDPOINT }}
+      APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Ensure the skills and toolbox exist in production
+        env:
+          FOUNDRY_PROJECT_ENDPOINT: ${{ vars.PROJECT_ENDPOINT }}
+          FOUNDRY_PROJECT_RESOURCE_GROUP: ${{ vars.PROJECT_RESOURCE_GROUP }}
+          AZURE_API_MANAGEMENT_GATEWAY_URL: ${{ vars.APIM_GATEWAY_URL }}
+        run: |
+          python scripts/foundry_ops.py publish-skills
+          python scripts/foundry_ops.py create-toolbox
+          python scripts/foundry_ops.py verify-toolbox
+      - id: deploy
+        name: Deploy the gated code to production
+        uses: ./.github/actions/deploy
+        with:
+          env-name: prod-${{ github.run_id }}
+      - name: Verify production v${{ steps.deploy.outputs.version }} (agentops eval run)
+        run: |
+          python ci/pipeline/agentops_eval.py --concurrency 6 eval run --config agentops.yaml \
+            --agent "$PROJECT_ENDPOINT/agents/public-library-3d1/versions/${{ steps.deploy.outputs.version }}" \
+            --output baseline --format all
+          echo "${{ steps.deploy.outputs.version }}" > baseline/version.txt
+      - name: Keep Foundry continuous evaluation enabled (hourly trace grading)
+        working-directory: ci/pipeline
+        run: python foundry_continuous_eval.py --endpoint "$PROJECT_ENDPOINT" --agent public-library-3d1 --interval-hours 1 --max-traces 10
+      - name: Publish the verification report
+        if: always()
+        run: '{ echo "## Production v${{ steps.deploy.outputs.version }}: verification"; cat baseline/report.md 2>/dev/null; } >> "$GITHUB_STEP_SUMMARY"'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-baseline
+          path: baseline/
+          include-hidden-files: true
+
+  redteam:
+    name: Production · AI red team and readiness
+    needs: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      PROJECT_ENDPOINT: ${{ vars.PROJECT_ENDPOINT }}
+      AZURE_AI_FOUNDRY_PROJECT_ENDPOINT: ${{ vars.PROJECT_ENDPOINT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: AI red team (agentops redteam run on production v${{ needs.production.outputs.version }})
+        run: |
+          mkdir -p .agentops/redteam
+          # Uses redteam.target from agentops.yaml (the serving production endpoint), so the
+          # evidence fingerprint matches the configuration Doctor checks.
+          agentops redteam run --config agentops.yaml --output .agentops/redteam/latest.json
+      - name: Publish the red-team summary
+        if: always()
+        run: python ci/pipeline/redteam_summary.py .agentops/redteam/latest.json >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/download-artifact@v4
+        with:
+          name: production-baseline
+          path: .agentops/results/latest
+      - name: AgentOps Doctor and release evidence pack
+        if: always()
+        run: |
+          agentops doctor --evidence-pack --out .agentops/doctor/report.md --severity-fail critical
+          { echo "## AgentOps Doctor"; sed -n '1,60p' .agentops/doctor/report.md; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agentops-evidence
+          path: |
+            .agentops/redteam/latest.json
+            .agentops/results/latest/
+            .agentops/release/
+            .agentops/doctor/
+          include-hidden-files: true
+
+  report-failure:
+    name: Open an issue if the release failed
+    needs: [test, dev, production, redteam]
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create -R "${{ github.repository }}" \
+            --title "Release blocked at ${GITHUB_SHA::7}" \
+            --body "The release run [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) failed. Jobs: test=${{ needs.test.result }}, dev=${{ needs.dev.result }}, production=${{ needs.production.result }}, redteam=${{ needs.redteam.result }}. Open the run summary to see which check failed and why."

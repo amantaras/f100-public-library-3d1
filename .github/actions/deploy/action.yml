@@ -1,0 +1,43 @@
+name: Deploy agent version
+description: azd deploy of the hosted agent; outputs the new immutable agent version
+inputs:
+  env-name:
+    required: true
+outputs:
+  version:
+    value: ${{ steps.deploy.outputs.version }}
+runs:
+  using: composite
+  steps:
+    - uses: Azure/setup-azd@v2
+      with:
+        version: "1.32.0"
+    - id: deploy
+      shell: bash
+      run: |
+        set -euo pipefail
+        azd auth login --client-id "$AZURE_CLIENT_ID" --tenant-id "$AZURE_TENANT_ID" --federated-credential-provider github --no-prompt
+        azd extension install azure.ai.agents --version 1.0.0-beta.17 --no-prompt
+        azd env new "${{ inputs.env-name }}" --subscription "$AZURE_SUBSCRIPTION_ID" --location eastus2 --no-prompt
+        azd env set AZURE_AI_PROJECT_ENDPOINT "$PROJECT_ENDPOINT"
+        azd env set FOUNDRY_PROJECT_ENDPOINT "$PROJECT_ENDPOINT"
+        azd env set AZURE_AI_PROJECT_ID "$PROJECT_ID"
+        azd env set AZURE_TENANT_ID "$AZURE_TENANT_ID"
+        azd env set AZURE_AI_MODEL_DEPLOYMENT_NAME gpt-6-luna
+        account_endpoint="${PROJECT_ENDPOINT%%/api/projects/*}"
+        content_safety_endpoint="${account_endpoint/.services.ai.azure.com/.cognitiveservices.azure.com}"
+        azd env set AZURE_CONTENT_SAFETY_ENDPOINT "$content_safety_endpoint"
+        azd env set APPLICATIONINSIGHTS_CONNECTION_STRING "$APPLICATIONINSIGHTS_CONNECTION_STRING"
+        python scripts/content_safety_ops.py provision \
+          --project-id "$PROJECT_ID" \
+          --state-file ".foundry/content-safety-${{ inputs.env-name }}.json"
+        azd deploy public-library-3d1 --no-prompt
+        version="$(azd env get-value AGENT_PUBLIC_LIBRARY_3D1_VERSION)"
+        test -n "$version"
+        python scripts/content_safety_ops.py verify-agent \
+          --project-id "$PROJECT_ID" \
+          --endpoint "$PROJECT_ENDPOINT" \
+          --version "$version" \
+          --state-file ".foundry/content-safety-${{ inputs.env-name }}.json"
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+        echo "Deployed **public-library-3d1 v$version** to \`$PROJECT_ENDPOINT\`" >> "$GITHUB_STEP_SUMMARY"

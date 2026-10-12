@@ -1,0 +1,105 @@
+name: "1 · Pull request gate"
+
+# Every change is deployed to dev as a new agent version and evaluated by AgentOps
+# before it can merge: absolute quality thresholds plus "no worse than production".
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-library-3d1-dev
+  cancel-in-progress: false
+
+env:
+  AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  AZURE_OPENAI_DEPLOYMENT: gpt-6-luna
+
+jobs:
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -q pyyaml
+      - run: python ci/pipeline/build_dataset.py --check
+      - run: python -m unittest discover -s ci/pipeline -p 'test_*.py' -v
+
+  evaluate:
+    name: Deploy candidate and evaluate (dev)
+    needs: test
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: dev
+    permissions:
+      contents: read
+      id-token: write
+      actions: read
+    env:
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      PROJECT_ENDPOINT: ${{ vars.PROJECT_ENDPOINT }}
+      PROJECT_ID: ${{ vars.PROJECT_ID }}
+      AZURE_AI_FOUNDRY_PROJECT_ENDPOINT: ${{ vars.PROJECT_ENDPOINT }}
+      APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - id: deploy
+        name: Deploy the candidate as a new agent version (dev)
+        uses: ./.github/actions/deploy
+        with:
+          env-name: pr-${{ github.event.pull_request.number }}-${{ github.run_id }}
+      - name: Fetch the production baseline
+        run: |
+          run_id="$(gh run list --branch main --status success --limit 50 --json databaseId,name --jq 'map(select(.name == "2 · Release: dev → production"))[0].databaseId // empty')"
+          if [ -n "$run_id" ]; then gh run download "$run_id" -n production-baseline -D baseline || true; fi
+          ls baseline 2>/dev/null || echo "No production baseline yet"
+      - name: AgentOps eval gate (agentops eval run on candidate v${{ steps.deploy.outputs.version }})
+        run: |
+          python ci/pipeline/agentops_eval.py --concurrency 6 eval run --config agentops.yaml \
+            --agent "$PROJECT_ENDPOINT/agents/public-library-3d1/versions/${{ steps.deploy.outputs.version }}" \
+            --output results/candidate --format all
+      - name: Block any regression vs production
+        if: always() && hashFiles('results/candidate/results.json') != ''
+        run: python ci/pipeline/regression_gate.py --candidate results/candidate/results.json --baseline baseline/results.json --baseline-label "production v$(cat baseline/version.txt 2>/dev/null || echo '?')" --output results/regression.json --markdown results/regression.md
+      - name: Publish the AgentOps report
+        if: always()
+        run: |
+          { echo "## Candidate v${{ steps.deploy.outputs.version }}"; cat results/candidate/report.md 2>/dev/null; } >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "## AgentOps gate: candidate v${{ steps.deploy.outputs.version }}"; echo
+            cat results/regression.md 2>/dev/null || echo "### ⛔ Evaluation did not complete"
+            echo; echo "[Full run and Foundry evaluation](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"; echo
+            echo "<details><summary>AgentOps report (absolute thresholds, per-case scores)</summary>"; echo
+            cat results/candidate/report.md 2>/dev/null; echo; echo "</details>"
+          } > results/comment.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr-evaluation
+          path: results/
+          include-hidden-files: true
+
+  comment:
+    name: Comment results on the PR
+    needs: evaluate
+    if: always() && needs.evaluate.result != 'skipped'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: pr-evaluation
+          path: results
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr comment ${{ github.event.pull_request.number }} -R ${{ github.repository }} --body-file results/comment.md

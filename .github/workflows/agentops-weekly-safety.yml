@@ -1,0 +1,57 @@
+name: "3 · Weekly safety check (production)"
+
+# Re-attack the production agent every week, even when nothing changed: models, content
+# filters and attack techniques evolve. A failure opens an issue.
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  AZURE_OPENAI_DEPLOYMENT: gpt-6-luna
+
+jobs:
+  redteam:
+    name: Production · AI red team
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      PROJECT_ENDPOINT: ${{ vars.PROJECT_ENDPOINT }}
+      AZURE_AI_FOUNDRY_PROJECT_ENDPOINT: ${{ vars.PROJECT_ENDPOINT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: AI red team (agentops redteam run on the serving production agent)
+        run: |
+          mkdir -p .agentops/redteam
+          # Uses redteam.target from agentops.yaml (the serving production endpoint), so the
+          # evidence fingerprint matches the configuration Doctor checks.
+          agentops redteam run --config agentops.yaml --output .agentops/redteam/latest.json
+      - if: always()
+        run: python ci/pipeline/redteam_summary.py .agentops/redteam/latest.json >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: redteam
+          path: .agentops/redteam/latest.json
+
+  report-failure:
+    needs: redteam
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue create -R "${{ github.repository }}" --title "Weekly safety check failed" --body "See ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

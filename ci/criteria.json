@@ -1,0 +1,160 @@
+[
+  {
+    "type": "azure_ai_evaluator",
+    "name": "relevance",
+    "evaluator_name": "builtin.relevance",
+    "initialization_parameters": {
+      "deployment_name": "gpt-6-luna"
+    },
+    "data_mapping": {
+      "query": "{{item.query}}",
+      "response": "{{item.response}}"
+    }
+  },
+  {
+    "type": "azure_ai_evaluator",
+    "name": "expected_behavior",
+    "evaluator_name": "f100-public-library-3d1-behavior-contract",
+    "evaluator_version": "1",
+    "initialization_parameters": {
+      "deployment_name": "gpt-6-luna",
+      "model": "gpt-6-luna",
+      "threshold": 0.5
+    },
+    "data_mapping": {
+      "query": "{{item.query}}",
+      "response": "{{item.response}}",
+      "expected_behavior": "{{item.expected_behavior}}"
+    }
+  },
+  {
+    "type": "azure_ai_evaluator",
+    "name": "indirect_attack",
+    "evaluator_name": "builtin.indirect_attack",
+    "initialization_parameters": {},
+    "data_mapping": {
+      "query": "{{item.query}}",
+      "response": "{{item.response}}"
+    }
+  },
+  {
+    "type": "azure_ai_evaluator",
+    "name": "task_adherence",
+    "evaluator_name": "builtin.task_adherence",
+    "initialization_parameters": {
+      "deployment_name": "gpt-6-luna"
+    },
+    "data_mapping": {
+      "query": "{{item.query_messages}}",
+      "response": "{{item.conversation}}",
+      "tool_definitions": "{{item.tool_definitions}}"
+    }
+  },
+  {
+    "type": "azure_ai_evaluator",
+    "name": "task_completion",
+    "evaluator_name": "builtin.task_completion",
+    "initialization_parameters": {
+      "deployment_name": "gpt-6-luna"
+    },
+    "data_mapping": {
+      "query": "{{item.query_messages}}",
+      "response": "{{item.conversation}}",
+      "tool_definitions": "{{item.tool_definitions}}"
+    }
+  },
+  {
+    "type": "azure_ai_evaluator",
+    "name": "intent_resolution",
+    "evaluator_name": "builtin.intent_resolution",
+    "initialization_parameters": {
+      "deployment_name": "gpt-6-luna"
+    },
+    "data_mapping": {
+      "query": "{{item.query_messages}}",
+      "response": "{{item.conversation}}",
+      "tool_definitions": "{{item.tool_definitions}}"
+    }
+  },
+  {
+    "type": "azure_ai_evaluator",
+    "name": "domain_rubric",
+    "evaluator_name": "f100-public-library-3d1-rubric",
+    "evaluator_version": "1",
+    "initialization_parameters": {
+      "model": "gpt-6-luna"
+    },
+    "data_mapping": {
+      "query": "{{item.query}}",
+      "response": "{{item.conversation}}",
+      "tool_definitions": "{{item.tool_definitions}}"
+    }
+  },
+  {
+    "type": "azure_ai_evaluator",
+    "name": "tool_call_accuracy",
+    "evaluator_name": "builtin.tool_call_accuracy",
+    "initialization_parameters": {
+      "deployment_name": "gpt-6-luna"
+    },
+    "data_mapping": {
+      "query": "{{item.query_messages}}",
+      "tool_calls": "{{item.tool_calls}}",
+      "response": "{{item.conversation}}",
+      "tool_definitions": "{{item.tool_definitions}}"
+    }
+  },
+  {
+    "type": "azure_ai_evaluator",
+    "name": "tool_selection",
+    "evaluator_name": "builtin.tool_selection",
+    "initialization_parameters": {
+      "deployment_name": "gpt-6-luna"
+    },
+    "data_mapping": {
+      "query": "{{item.query_messages}}",
+      "tool_calls": "{{item.tool_calls}}",
+      "response": "{{item.conversation}}",
+      "tool_definitions": "{{item.tool_definitions}}"
+    }
+  },
+  {
+    "type": "azure_ai_evaluator",
+    "name": "tool_input_accuracy",
+    "evaluator_name": "builtin.tool_input_accuracy",
+    "initialization_parameters": {
+      "deployment_name": "gpt-6-luna"
+    },
+    "data_mapping": {
+      "query": "{{item.query_messages}}",
+      "response": "{{item.conversation}}",
+      "tool_definitions": "{{item.tool_definitions}}"
+    }
+  },
+  {
+    "type": "azure_ai_evaluator",
+    "name": "tool_output_utilization",
+    "evaluator_name": "builtin.tool_output_utilization",
+    "initialization_parameters": {
+      "deployment_name": "gpt-6-luna"
+    },
+    "data_mapping": {
+      "query": "{{item.query_messages}}",
+      "response": "{{item.conversation}}",
+      "tool_definitions": "{{item.tool_definitions}}"
+    }
+  },
+  {
+    "type": "azure_ai_evaluator",
+    "name": "tool_call_success",
+    "evaluator_name": "builtin.tool_call_success",
+    "initialization_parameters": {
+      "deployment_name": "gpt-6-luna"
+    },
+    "data_mapping": {
+      "query": "{{item.query_messages}}",
+      "response": "{{item.conversation}}",
+      "tool_definitions": "{{item.tool_definitions}}"
+    }
+  }
+]

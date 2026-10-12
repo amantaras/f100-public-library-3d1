@@ -1,0 +1,5 @@
+azure-ai-projects==2.2.0
+azure-identity==1.25.3
+httpx==0.28.1
+openai==2.41.0
+PyYAML==6.0.3

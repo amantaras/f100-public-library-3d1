@@ -1,0 +1,1 @@
+agentops-accelerator[cockpit]==0.15.1

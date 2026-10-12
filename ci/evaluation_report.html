@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evaluation report</title>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("clawpilotTheme");
+    const theme =
+      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--cp-bg); color: var(--cp-text);
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.6; }
+main { max-width: 1240px; margin: auto; padding: 40px 24px 64px; }
+h1 { margin: 12px 0 16px; font-size: clamp(28px, 4vw, 40px); line-height: 1.15; max-width: 950px; }
+h2 { margin: 32px 0 16px; font-size: 24px; line-height: 1.3; }
+h3 { margin: 0 0 16px; font-size: 18px; }
+h4 { margin: 0 0 8px; font-size: 16px; }
+p { margin: 8px 0 16px; }
+small, .muted { color: var(--cp-text-muted); }
+small { font-size: 13px; font-weight: normal; }
+a { color: var(--cp-link); text-underline-offset: 3px; overflow-wrap: anywhere; }
+a:hover { color: var(--cp-accent-hover); }
+a:focus-visible, summary:focus-visible { outline: 3px solid var(--cp-accent); outline-offset: 4px; }
+.eyebrow { text-transform: uppercase; letter-spacing: 1.5px; font-size: 12px; font-weight: 700; color: var(--cp-text-muted); }
+.hero { padding: 32px; border: 1px solid var(--cp-border); border-radius: 16px; background: var(--cp-surface); border-top: 6px solid var(--cp-accent); }
+.hero.passed { border-top-color: var(--cp-success); }
+.hero.blocked, .hero.error { border-top-color: var(--cp-danger); }
+.hero.unchanged, .hero.unavailable { border-top-color: var(--cp-warning); }
+nav { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+nav a { border: 1px solid var(--cp-border); border-radius: 0.625rem; padding: 8px 12px; text-decoration: none; font-weight: 600; }
+.cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 24px 0 32px; }
+.card, .panel { padding: 24px; border-radius: 16px; border: 1px solid var(--cp-border); background: var(--cp-surface); }
+.cards > .panel { grid-column: 1 / -1; }
+.card p:last-child { margin-bottom: 0; font-size: 14px; color: var(--cp-text-muted); }
+.big { display: block; font-size: 32px; line-height: 1.25; margin: 12px 0; }
+.metric-grid, .answer-grid, .context-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+h3.group { margin: 32px 0 12px; font-size: 18px; }
+.bar-row { display: grid; grid-template-columns: 84px 1fr 48px; gap: 12px; align-items: center; margin-bottom: 12px; font-size: 14px; }
+.track { height: 12px; background: var(--cp-surface-soft); border-radius: 0.625rem; overflow: hidden; }
+.bar { height: 100%; border-radius: 0.625rem; }
+.bar.baseline { background: var(--cp-border-strong); }
+.bar.candidate { background: var(--cp-accent); }
+.table-wrap { overflow-x: auto; border: 1px solid var(--cp-border); border-radius: 0.625rem; background: var(--cp-surface); }
+table { border-collapse: collapse; width: 100%; text-align: left; }
+th, td { padding: 12px 16px; border-bottom: 1px solid var(--cp-border); vertical-align: top; }
+th { background: var(--cp-surface-soft); font-size: 13px; }
+tr:last-child td { border-bottom: 0; }
+.tag { display: inline-block; padding: 2px 8px; border: 1px solid var(--cp-border-strong); border-radius: 0.625rem; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.tag.improved { border-color: var(--cp-success); }
+.tag.regressed { border-color: var(--cp-danger); }
+.case { margin: 16px 0; border: 1px solid var(--cp-border); background: var(--cp-surface); border-radius: 16px; overflow: hidden; }
+summary { cursor: pointer; padding: 20px 24px; }
+summary .tag { margin: 0 12px; }
+summary > span:last-child { font-size: 15px; overflow-wrap: anywhere; }
+.case[open] summary { background: var(--cp-accent-soft); border-bottom: 1px solid var(--cp-border); }
+.case-body { padding: 24px; }
+.case-body > h3 { margin-top: 24px; }
+.case-body > h3:first-child { margin-top: 0; }
+.response { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--cp-surface-soft); padding: 20px; border-radius: 0.625rem; margin: 0 0 24px; }
+.reason { border-left: 3px solid var(--cp-border-strong); padding: 8px 16px; margin: 16px 0; }
+.reason p:last-child { margin-bottom: 0; }
+code { font-family: Consolas, "Courier New", Courier, monospace; font-size: 12px; overflow-wrap: anywhere; }
+dl { margin: 0; }
+dt { font-size: 12px; font-weight: 700; color: var(--cp-text-muted); margin-top: 12px; }
+dd { margin: 0; }
+.notice { padding: 20px 24px; background: var(--cp-accent-soft); border-radius: 0.625rem; }
+footer { border-top: 1px solid var(--cp-border); margin-top: 40px; padding-top: 20px; font-size: 13px; color: var(--cp-text-muted); }
+body[data-report-state="unchanged"] .eval-only,
+body[data-report-state="unavailable"] .eval-only,
+body[data-report-state="error"] .eval-only { display: none; }
+@media (max-width: 850px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) {
+  main { padding: 16px 12px 32px; } .hero, .card, .panel, .case-body { padding: 20px; }
+  .cards, .metric-grid, .answer-grid, .context-grid { grid-template-columns: 1fr; }
+  summary { padding: 16px; } summary > span:last-child { display: block; margin-top: 8px; }
+}
+</style>
+</head>
+<body data-report-state="$state">
+<main>
+  <header class="hero $state">
+    <p class="eyebrow">Foundry agent evaluation / $agent</p>
+    <h1>$title</h1>
+    <p>$message</p>
+    <p class="muted">Generated $generated &middot; Source evidence is preserved in the run artifacts</p>
+    <nav aria-label="Evidence links">$navigation</nav>
+  </header>
+  <section class="cards" aria-label="Evaluation overview">$cards</section>
+  $gate_reasons
+  <section class="eval-only">
+  <p class="notice"><strong>Release policy:</strong> complete, comparable evidence. Relevance, expected behavior and indirect-attack resistance block on any per-case regression. Agent-behavior, rubric and tool metrics block when their paired mean or pass rate drops by more than one case's worth of judge disagreement. Tool metrics are compared only where both versions actually called tools. There is no extra perfect-score requirement. Evaluation approval and deployment completion are separate facts.</p>
+  <div aria-label="Metric comparisons">$metrics</div>
+  <h2>Every case remains visible</h2>
+  <p class="muted">Pass means every applicable grader passed for that answer (N/A tool metrics are not counted as failures). Change also detects numeric score decreases, even when both answers pass.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Case ID</th><th>Category</th><th>Candidate tools</th><th>Baseline</th><th>Candidate</th><th>Change</th><th>Failed candidate checks</th></tr></thead>
+    <tbody>$overview</tbody>
+  </table></div>
+  <h2>Case-by-case evidence</h2>
+  <p class="notice">Detailed evaluation reports can contain prompts and model-generated answers. Treat them as confidential; do not publish without privacy review. Automated judgments are not clinical advice or certification.</p>
+  $details
+  </section>
+  $notices
+  <h2>Execution and provenance</h2>
+  <div class="context-grid">$context</div>
+  <footer>Read-only report. It does not invoke agents, recompute judge scores, change thresholds or promote a deployment. Final deployment status belongs to the readiness/promotion jobs and the deployment record.</footer>
+</main>
+</body>
+</html>
