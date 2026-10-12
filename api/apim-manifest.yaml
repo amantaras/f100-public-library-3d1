@@ -1,0 +1,40 @@
+version: 1
+ownership:
+  workshop: foundry100
+  use_case: public-library-3d1
+rest_api:
+  name: f100-public-library-3d1-api
+  path: f100-public-library-3d1-api
+mcp_server:
+  name: f100-public-library-3d1-mcp
+  path: f100-public-library-3d1-mcp
+  connection: f100-public-library-3d1-mcp
+product: f100-public-library-3d1-mcp-product
+subscription: f100-public-library-3d1-mcp-subscription
+tools:
+- id: f100-public-library-3d1-lookupFine
+  display_name: lookupFine
+  description: Retrieve patron fine and fee information. Use when patrons ask about
+    their account balance, overdue charges, or payment status.
+  operation_id: lookup-fine
+- id: f100-public-library-3d1-reserveBook
+  display_name: reserveBook
+  description: Create or check a book reservation. Use when patrons want to reserve
+    a book or check their reservation queue position.
+  operation_id: reserve-book
+- id: f100-public-library-3d1-registerEvent
+  display_name: registerEvent
+  description: Register a patron for a library event. Use when patrons want to sign
+    up for programs, classes, or activities; always confirm patron contact information.
+  operation_id: register-event
+- id: f100-public-library-3d1-checkEventAvailability
+  display_name: checkEventAvailability
+  description: Check availability and details for library events. Use to help patrons
+    find upcoming events, see descriptions, and confirm they have space.
+  operation_id: check-event-availability
+peers: []
+smoke:
+  query: How much do I owe the library and what are my overdue items?
+  expected_tool: lookupFine
+  arguments:
+    patron_id: P20261012

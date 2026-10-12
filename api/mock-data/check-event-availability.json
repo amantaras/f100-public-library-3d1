@@ -1,0 +1,13 @@
+{
+  "data_classification": "synthetic-workshop-data",
+  "event_id": "EVT-20261020-STEM",
+  "event_title": "STEM for Young Learners",
+  "event_category": "education",
+  "event_date": "2026-10-20",
+  "event_time": "15:00",
+  "duration_minutes": 60,
+  "target_age_group": "8-12",
+  "available_seats": 5,
+  "total_capacity": 15,
+  "description": "Hands-on science and technology activities for children."
+}

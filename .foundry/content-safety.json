@@ -1,0 +1,36 @@
+{
+  "account_id": "/subscriptions/61901f18-d50c-4d85-90d3-cb4670a440db/resourceGroups/rg-amantara-hosted-agents-eastus2/providers/Microsoft.CognitiveServices/accounts/amantara-hosted-agents-eastus2",
+  "agent": {
+    "invocations_blocked": true,
+    "name": "public-library-3d1",
+    "rai_policy_id": "/subscriptions/61901f18-d50c-4d85-90d3-cb4670a440db/resourceGroups/rg-amantara-hosted-agents-eastus2/providers/Microsoft.CognitiveServices/accounts/amantara-hosted-agents-eastus2/raiPolicies/f100-public-library-3d1-content-safety",
+    "responses_blocked": true,
+    "version": "1"
+  },
+  "blocklist": {
+    "attached_to": [
+      "Prompt",
+      "Completion"
+    ],
+    "items": 4,
+    "name": "f100-public-library-3d1-blocklist"
+  },
+  "rai_policy": {
+    "id": "/subscriptions/61901f18-d50c-4d85-90d3-cb4670a440db/resourceGroups/rg-amantara-hosted-agents-eastus2/providers/Microsoft.CognitiveServices/accounts/amantara-hosted-agents-eastus2/raiPolicies/f100-public-library-3d1-content-safety",
+    "mode": "Blocking",
+    "name": "f100-public-library-3d1-content-safety"
+  },
+  "rapid_incidents": [
+    {
+      "activation_terms": [
+        "PRIVACY-BREACH-001"
+      ],
+      "name": "f100-public-library-3d1-patron-privacy-violation",
+      "samples": 3,
+      "source_name": "patron-privacy-violation"
+    }
+  ],
+  "schema_version": 1,
+  "status": "verified",
+  "verified_at": "2026-10-12T06:15:39.107434+00:00"
+}

@@ -1,0 +1,295 @@
+openapi: 3.0.3
+info:
+  title: Public library assistant synthetic workshop API (public-library-3d1)
+  version: 1.0.0
+  description: Synthetic APIM mock data for Foundry Agent Factory (not production
+    data); peer operations call other agents.
+servers:
+- url: https://example.invalid
+paths:
+  /patron/fine:
+    post:
+      operationId: lookup-fine
+      summary: lookupFine
+      description: Retrieve patron fine and fee information. Use when patrons ask
+        about their account balance, overdue charges, or payment status.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                patron_id:
+                  type: string
+                  description: The library patron identifier.
+              required:
+              - patron_id
+      responses:
+        '200':
+          description: Synthetic workshop response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data_classification:
+                    type: string
+                    example: synthetic-workshop-data
+                  patron_id:
+                    type: string
+                    example: P20261012
+                  account_status:
+                    type: string
+                    example: active
+                  total_fines:
+                    type: number
+                    example: 12.5
+                  overdue_items:
+                    type: integer
+                    example: 2
+                  fines_due:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        book_title:
+                          type: string
+                          example: The Quantum Library
+                        days_overdue:
+                          type: integer
+                          example: 5
+                        amount:
+                          type: number
+                          example: 7.5
+                      example: &id001
+                        book_title: The Quantum Library
+                        days_overdue: 5
+                        amount: 7.5
+                    example: &id002
+                    - *id001
+                    - book_title: Patron Safety Guide
+                      days_overdue: 3
+                      amount: 5.0
+                  payment_methods:
+                    type: array
+                    items:
+                      type: string
+                      example: online portal
+                    example: &id003
+                    - online portal
+                    - in-person at desk
+                example: &id004
+                  data_classification: synthetic-workshop-data
+                  patron_id: P20261012
+                  account_status: active
+                  total_fines: 12.5
+                  overdue_items: 2
+                  fines_due: *id002
+                  payment_methods: *id003
+              example: *id004
+  /patron/reserve:
+    post:
+      operationId: reserve-book
+      summary: reserveBook
+      description: Create or check a book reservation. Use when patrons want to reserve
+        a book or check their reservation queue position.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                patron_id:
+                  type: string
+                  description: The library patron identifier.
+                book_isbn:
+                  type: string
+                  description: The ISBN of the book to reserve.
+              required:
+              - patron_id
+              - book_isbn
+      responses:
+        '200':
+          description: Synthetic workshop response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data_classification:
+                    type: string
+                    example: synthetic-workshop-data
+                  patron_id:
+                    type: string
+                    example: P20261012
+                  reservation_status:
+                    type: string
+                    example: confirmed
+                  book_title:
+                    type: string
+                    example: The Quantum Library
+                  book_isbn:
+                    type: string
+                    example: 978-0-525-55555-5
+                  queue_position:
+                    type: integer
+                    example: 3
+                  estimated_availability:
+                    type: string
+                    example: '2026-10-26'
+                  confirmation_number:
+                    type: string
+                    example: RES-20261012-001
+                example: &id005
+                  data_classification: synthetic-workshop-data
+                  patron_id: P20261012
+                  reservation_status: confirmed
+                  book_title: The Quantum Library
+                  book_isbn: 978-0-525-55555-5
+                  queue_position: 3
+                  estimated_availability: '2026-10-26'
+                  confirmation_number: RES-20261012-001
+              example: *id005
+  /patron/event:
+    post:
+      operationId: register-event
+      summary: registerEvent
+      description: Register a patron for a library event. Use when patrons want to
+        sign up for programs, classes, or activities; always confirm patron contact
+        information.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                patron_id:
+                  type: string
+                  description: The library patron identifier.
+                event_id:
+                  type: string
+                  description: The unique identifier for the library event.
+              required:
+              - patron_id
+              - event_id
+      responses:
+        '200':
+          description: Synthetic workshop response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data_classification:
+                    type: string
+                    example: synthetic-workshop-data
+                  patron_id:
+                    type: string
+                    example: P20261012
+                  event_id:
+                    type: string
+                    example: EVT-20261020-STEM
+                  event_title:
+                    type: string
+                    example: STEM for Young Learners
+                  event_date:
+                    type: string
+                    example: '2026-10-20'
+                  event_time:
+                    type: string
+                    example: '15:00'
+                  registration_status:
+                    type: string
+                    example: confirmed
+                  confirmation_number:
+                    type: string
+                    example: EVT-20261012-001
+                  capacity_remaining:
+                    type: integer
+                    example: 5
+                example: &id006
+                  data_classification: synthetic-workshop-data
+                  patron_id: P20261012
+                  event_id: EVT-20261020-STEM
+                  event_title: STEM for Young Learners
+                  event_date: '2026-10-20'
+                  event_time: '15:00'
+                  registration_status: confirmed
+                  confirmation_number: EVT-20261012-001
+                  capacity_remaining: 5
+              example: *id006
+  /library/events:
+    post:
+      operationId: check-event-availability
+      summary: checkEventAvailability
+      description: Check availability and details for library events. Use to help
+        patrons find upcoming events, see descriptions, and confirm they have space.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_id:
+                  type: string
+                  description: The unique identifier for the library event.
+              required:
+              - event_id
+      responses:
+        '200':
+          description: Synthetic workshop response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data_classification:
+                    type: string
+                    example: synthetic-workshop-data
+                  event_id:
+                    type: string
+                    example: EVT-20261020-STEM
+                  event_title:
+                    type: string
+                    example: STEM for Young Learners
+                  event_category:
+                    type: string
+                    example: education
+                  event_date:
+                    type: string
+                    example: '2026-10-20'
+                  event_time:
+                    type: string
+                    example: '15:00'
+                  duration_minutes:
+                    type: integer
+                    example: 60
+                  target_age_group:
+                    type: string
+                    example: 8-12
+                  available_seats:
+                    type: integer
+                    example: 5
+                  total_capacity:
+                    type: integer
+                    example: 15
+                  description:
+                    type: string
+                    example: Hands-on science and technology activities for children.
+                example: &id007
+                  data_classification: synthetic-workshop-data
+                  event_id: EVT-20261020-STEM
+                  event_title: STEM for Young Learners
+                  event_category: education
+                  event_date: '2026-10-20'
+                  event_time: '15:00'
+                  duration_minutes: 60
+                  target_age_group: 8-12
+                  available_seats: 5
+                  total_capacity: 15
+                  description: Hands-on science and technology activities for children.
+              example: *id007

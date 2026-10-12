@@ -1,0 +1,62 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+requiredVersions:
+    extensions:
+        azure.ai.agents: '>=1.0.0-beta.12'
+name: f100-public-library-3d1
+services:
+    foundry-project:
+        host: azure.ai.project
+        endpoint: ${AZURE_AI_PROJECT_ENDPOINT}
+    public-library-3d1:
+        project: .
+        host: azure.ai.agent
+        language: python
+        uses:
+            - foundry-project
+        codeConfiguration:
+            dependencyResolution: remote_build
+            entryPoint: main.py
+            runtime: python_3_13
+        container:
+            resources:
+                cpu: "0.5"
+                memory: 1Gi
+        kind: hosted
+        name: public-library-3d1
+        description: "Public library assistant (Foundry Agent Factory generated), powered by GitHub Copilot SDK."
+        metadata:
+            enableVnextExperience: "true"
+        env:
+            APPLICATIONINSIGHTS_CONNECTION_STRING: ${APPLICATIONINSIGHTS_CONNECTION_STRING}
+            AZURE_AI_MODEL_DEPLOYMENT_NAME: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}
+            AZURE_CONTENT_SAFETY_ENDPOINT: ${AZURE_CONTENT_SAFETY_ENDPOINT}
+            AZURE_CONTENT_SAFETY_INCIDENTS: f100-public-library-3d1-patron-privacy-violation
+            AZURE_CONTENT_SAFETY_ACTIVATION_RULES: "[{\"name\": \"f100-public-library-3d1-patron-privacy-violation\", \"activation_terms\": [\"PRIVACY-BREACH-001\"]}]"
+            AZURE_EXPERIMENTAL_ENABLE_GENAI_TRACING: "true"
+            AZURE_TRACING_GEN_AI_CONTENT_RECORDING_ENABLED: "true"
+            FOUNDRY_AGENT_NAME: public-library-3d1
+            MEMORY_STORE_NAME: ${MEMORY_STORE_NAME}
+            TOOLBOX_DISCOVER_TOOLS: "true"
+            TOOLBOX_NAME: f100-public-library-3d1-toolbox
+            TOOLBOX_VERSION: "1"
+        policies:
+            - type: rai_policy
+              raiPolicyName: /subscriptions/61901f18-d50c-4d85-90d3-cb4670a440db/resourceGroups/rg-amantara-hosted-agents-eastus2/providers/Microsoft.CognitiveServices/accounts/amantara-hosted-agents-eastus2/raiPolicies/f100-public-library-3d1-content-safety
+              invocationsModeration:
+                  responseMode: streaming
+                  inputPaths:
+                      - $.input
+                      - $.message
+                      - $.prompt
+                      - $.query
+                  streamSelectors:
+                      - eventType: token
+                        textField: delta
+        protocols:
+            - protocol: responses
+              version: 2.0.0
+            - protocol: invocations
+              version: 2.0.0
+infra:
+    provider: microsoft.foundry

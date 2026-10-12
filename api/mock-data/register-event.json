@@ -1,0 +1,11 @@
+{
+  "data_classification": "synthetic-workshop-data",
+  "patron_id": "P20261012",
+  "event_id": "EVT-20261020-STEM",
+  "event_title": "STEM for Young Learners",
+  "event_date": "2026-10-20",
+  "event_time": "15:00",
+  "registration_status": "confirmed",
+  "confirmation_number": "EVT-20261012-001",
+  "capacity_remaining": 5
+}

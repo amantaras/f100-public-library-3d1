@@ -1,0 +1,8 @@
+name: f100-public-library-3d1-toolbox
+description: Foundry Agent Factory toolbox for Public library assistant
+connections:
+- name: f100-public-library-3d1-mcp
+skills:
+- name: f100-public-library-3d1-fine-fees
+- name: f100-public-library-3d1-book-reservation
+- name: f100-public-library-3d1-event-registration

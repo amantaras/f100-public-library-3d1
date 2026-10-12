@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "FAF: Debug local agent with Inspector",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": { "host": "localhost", "port": 5679 },
+      "preLaunchTask": "FAF: Open Agent Inspector",
+      "internalConsoleOptions": "neverOpen",
+      "postDebugTask": "FAF: Terminate all tasks"
+    },
+    {
+      "name": "FAF: Debug local agent in terminal",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": { "host": "localhost", "port": 5679 },
+      "preLaunchTask": "FAF: Run local agent in terminal",
+      "internalConsoleOptions": "neverOpen",
+      "postDebugTask": "FAF: Terminate all tasks"
+    }
+  ]
+}

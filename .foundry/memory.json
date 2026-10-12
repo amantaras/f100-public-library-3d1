@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "status": "verified",
+  "name": "f100-public-library-3d1-memory",
+  "action": "created",
+  "chat_model": "gpt-6-luna",
+  "embedding_model": "text-embedding-3-large",
+  "provisioned_at": "2026-10-12T06:07:20.127127+00:00",
+  "verified": {
+    "agent": "public-library-3d1",
+    "version": "1",
+    "verified_at": "2026-10-12T06:24:07.857843+00:00",
+    "seconds_to_recall": 214,
+    "answer_names_fact": true,
+    "retained": false
+  }
+}

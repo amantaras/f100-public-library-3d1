@@ -1,0 +1,23 @@
+{
+  "data_classification": "synthetic-workshop-data",
+  "patron_id": "P20261012",
+  "account_status": "active",
+  "total_fines": 12.5,
+  "overdue_items": 2,
+  "fines_due": [
+    {
+      "book_title": "The Quantum Library",
+      "days_overdue": 5,
+      "amount": 7.5
+    },
+    {
+      "book_title": "Patron Safety Guide",
+      "days_overdue": 3,
+      "amount": 5.0
+    }
+  ],
+  "payment_methods": [
+    "online portal",
+    "in-person at desk"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "generator": "foundry100",
+  "template": "hosted-agent-usecase",
+  "framework": "github-copilot-sdk",
+  "agent_name": "public-library-3d1",
+  "resource_prefix": "f100-public-library-3d1",
+  "template_git_source": "github-copilot-hosted-agent@d26f3a6",
+  "content": {
+    "provider": "copilot"
+  }
+}

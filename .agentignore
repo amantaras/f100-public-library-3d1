@@ -1,0 +1,8 @@
+**
+!main.py
+!agent_memory.py
+!requirements.txt
+!.agent_configs/
+!.agent_configs/**
+!skills/
+!skills/**

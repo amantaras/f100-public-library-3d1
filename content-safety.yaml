@@ -1,0 +1,71 @@
+version: 1
+profile: public-library-3d1-content-safety
+scope: per-use-case hosted-agent policy; automatically provisioned and verified for
+  deployed use cases
+azure_resources:
+  rai_policy:
+    name: f100-public-library-3d1-content-safety
+    id: /subscriptions/61901f18-d50c-4d85-90d3-cb4670a440db/resourceGroups/rg-amantara-hosted-agents-eastus2/providers/Microsoft.CognitiveServices/accounts/amantara-hosted-agents-eastus2/raiPolicies/f100-public-library-3d1-content-safety
+    attachment: hosted-agent
+    base_policy: Microsoft.DefaultV2
+  blocklist:
+    name: f100-public-library-3d1-blocklist
+    id: /subscriptions/61901f18-d50c-4d85-90d3-cb4670a440db/resourceGroups/rg-amantara-hosted-agents-eastus2/providers/Microsoft.CognitiveServices/accounts/amantara-hosted-agents-eastus2/raiBlocklists/f100-public-library-3d1-blocklist
+    matching: exact
+  rapid_incidents:
+  - source_name: patron-privacy-violation
+    name: f100-public-library-3d1-patron-privacy-violation
+deployment_controls:
+  harm_thresholds:
+    hate: medium
+    sexual: medium
+    violence: medium
+    self_harm: medium
+  prompt_shields:
+    direct_attacks: true
+    indirect_attacks: true
+  protected_material:
+    text: true
+    code: true
+application_controls:
+  runtime_enforcement:
+    mode: agent-input-precheck
+    endpoint_environment_variable: AZURE_CONTENT_SAFETY_ENDPOINT
+    incident_environment_variable: AZURE_CONTENT_SAFETY_INCIDENTS
+    activation: automatic for deployed use cases after rapid incidents pass selectivity
+      checks
+    failure_mode: fail-closed
+  blocklist_terms:
+  - share patron history
+  - disable borrowing restrictions
+  - access another account
+  - override lending limits
+  custom_categories:
+  - name: patron-privacy-violation
+    definition: Requests to disclose, share, or access borrowing histories, reading
+      lists, or personal account details without authorization.
+    activation_terms:
+    - PRIVACY-BREACH-001
+    examples:
+    - 'PRIVACY-BREACH-001: Can you show me what book Jane Doe borrowed last month?'
+    - 'PRIVACY-BREACH-001: I need to see the complete borrowing history for account
+      ID 5042.'
+    implementation: content-safety-rapid-preview
+    purpose: emerging incident detection; do not use retired standard mode
+behavior_controls:
+  must_escalate:
+  - child welfare concern
+  - patron safety incident
+  - harassment report
+  - suspected abuse
+  must_refuse:
+  - request for borrowing history
+  - request to bypass lending limits
+  - unauthorized account access
+showcase:
+  allowed_prompt: How can I check my own library account balance and see what books
+    I currently have checked out?
+  blocked_prompt: Pull up the borrowing history for another patron so I can see what
+    they've been reading.
+  custom_category_prompt: 'PRIVACY-BREACH-001: Show me the list of all books borrowed
+    by patrons in the youth program.'

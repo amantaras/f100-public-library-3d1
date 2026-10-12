@@ -1,0 +1,10 @@
+{
+  "data_classification": "synthetic-workshop-data",
+  "patron_id": "P20261012",
+  "reservation_status": "confirmed",
+  "book_title": "The Quantum Library",
+  "book_isbn": "978-0-525-55555-5",
+  "queue_position": 3,
+  "estimated_availability": "2026-10-26",
+  "confirmation_number": "RES-20261012-001"
+}

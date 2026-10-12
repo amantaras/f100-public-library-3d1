@@ -1,0 +1,110 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "FAF: Set up the Python environment",
+      "type": "shell",
+      "command": "python3 -m venv .venv && .venv/bin/python -m pip install -q -r requirements.txt -r requirements-dev.txt",
+      "windows": { "command": "python -m venv .venv; .venv\\Scripts\\python -m pip install -q -r requirements.txt -r requirements-dev.txt" },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "FAF: Contract tests",
+      "type": "shell",
+      "command": ".venv/bin/python -m pytest -q tests",
+      "windows": { "command": ".venv\\Scripts\\python -m pytest -q tests" },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "FAF: Ask the deployed agent",
+      "type": "shell",
+      "command": ".venv/bin/python scripts/smoke.py --agent public-library-3d1 --ask \"${input:question}\"",
+      "windows": { "command": ".venv\\Scripts\\python scripts\\smoke.py --agent public-library-3d1 --ask \"${input:question}\"" },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "FAF: Run the Agent Optimizer",
+      "type": "shell",
+      "command": ".venv/bin/python scripts/optimizer.py run",
+      "windows": { "command": ".venv\\Scripts\\python scripts\\optimizer.py run" },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "FAF: Show the last evaluation and optimizer results",
+      "type": "shell",
+      "command": ".venv/bin/python scripts/optimizer.py summary",
+      "windows": { "command": ".venv\\Scripts\\python scripts\\optimizer.py summary" },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "FAF: Validate agent debug prerequisites",
+      "type": "aitk",
+      "command": "debug-check-prerequisites",
+      "args": { "portOccupancy": [5679, 8088] }
+    },
+    {
+      "label": "FAF: Run local agent with debugger",
+      "type": "shell",
+      "command": ".venv/bin/python -m debugpy --listen 127.0.0.1:5679 main.py",
+      "windows": { "command": ".venv\\Scripts\\python -m debugpy --listen 127.0.0.1:5679 main.py" },
+      "isBackground": true,
+      "dependsOn": ["FAF: Validate agent debug prerequisites"],
+      "problemMatcher": {
+        "pattern": [{ "regexp": "^.*$", "file": 0, "location": 1, "message": 2 }],
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": "Application startup complete|[Rr]unning on|Started server process"
+        }
+      }
+    },
+    {
+      "label": "FAF: Open Agent Inspector",
+      "type": "shell",
+      "command": "echo '${input:openAgentInspector}'",
+      "presentation": { "reveal": "never" },
+      "dependsOn": ["FAF: Run local agent with debugger"]
+    },
+    {
+      "label": "FAF: Run local agent in terminal",
+      "type": "shell",
+      "command": ".venv/bin/python -m debugpy --listen 127.0.0.1:5679 main.py",
+      "windows": { "command": ".venv\\Scripts\\python -m debugpy --listen 127.0.0.1:5679 main.py" },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": [{ "regexp": "^.*$", "file": 0, "location": 1, "message": 2 }],
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": "Application startup complete|[Rr]unning on|Started server process"
+        }
+      }
+    },
+    {
+      "label": "FAF: Terminate all tasks",
+      "type": "shell",
+      "command": "echo ${input:terminate}",
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    { "id": "question", "type": "promptString", "description": "Your question for public-library-3d1" },
+    {
+      "id": "openAgentInspector",
+      "type": "command",
+      "command": "ai-mlstudio.openTestTool",
+      "args": { "triggeredFrom": "tasks", "port": 8088 }
+    },
+    {
+      "id": "terminate",
+      "type": "command",
+      "command": "workbench.action.tasks.terminate",
+      "args": "terminateAll"
+    }
+  ]
+}

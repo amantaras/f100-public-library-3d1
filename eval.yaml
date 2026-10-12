@@ -1,0 +1,13 @@
+name: f100-public-library-3d1-baseline
+agent:
+    name: public-library-3d1
+    kind: hosted
+    config: .agent_configs/baseline/metadata.yaml
+    model: gpt-6-luna
+dataset:
+    local_uri: evaluations/public-library-3d1-seed-v1.jsonl
+evaluators:
+    - builtin.task_completion
+    - builtin.tool_call_accuracy
+options:
+    eval_model: gpt-6-luna

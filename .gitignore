@@ -1,0 +1,14 @@
+.env
+.venv*/
+.azure/
+__pycache__/
+.pytest_cache/
+.foundry/results/
+# Local and CI evaluation output (the pipeline keeps these as run artifacts)
+results/
+baseline/
+.agentops/results/
+.agentops/doctor/
+.agentops/redteam/
+.agentops/release/
+.agentops/agent/
