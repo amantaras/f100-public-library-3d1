@@ -1,0 +1,22 @@
+{
+  "thresholds": {
+    "coherence": ">=2.4",
+    "fluency": ">=2.5",
+    "groundedness": ">=1.6",
+    "intent_resolution": ">=2.5",
+    "relevance": ">=2.2",
+    "response_completeness": ">=1.2",
+    "task_adherence": ">=0.52"
+  },
+  "measured": {
+    "coherence": 3.857142857142857,
+    "fluency": 4.0,
+    "groundedness": 3.0714285714285716,
+    "relevance": 3.7142857142857144,
+    "response_completeness": 2.7142857142857144,
+    "intent_resolution": 4.0,
+    "task_adherence": 0.9230769230769231
+  },
+  "agent_version": "1",
+  "rule": "scales: measured - 1.5; rates: measured - 0.4; unmeasured metrics get no floor"
+}

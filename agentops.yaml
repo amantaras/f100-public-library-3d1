@@ -10,7 +10,7 @@ evaluators: ["CoherenceEvaluator", "FluencyEvaluator", "GroundednessEvaluator", 
 # Release floors (1-5 judge scales; task_adherence is a 0-1 pass rate), calibrated from one AgentOps evaluation of the deployed DEV
 # agent when this repository was packaged (.foundry/release-floors.json holds the measurements). A metric that could not be
 # measured is not evaluated at all (an unmeasurable evaluator would be scored against AgentOps' own default floor). Raise them as the agent improves: the release blocks any score that falls below them.
-thresholds: {}
+thresholds: {"coherence": ">=2.4", "fluency": ">=2.5", "groundedness": ">=1.6", "intent_resolution": ">=2.5", "relevance": ">=2.2", "response_completeness": ">=1.2", "task_adherence": ">=0.52"}
 observability:
   tracing_enabled: true
 redteam:
